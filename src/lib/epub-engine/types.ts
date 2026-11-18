@@ -188,8 +188,10 @@ export interface EpubBuildReport {
   identifier: string;
   modifiedIso: string;
   chapterCount: number;
+  chapterImageCount: number;
   packagedImageCount: number;
   hasCover: boolean;
+  hasGeneratedCover: boolean;
   totalBytes: number;
   entryPaths: string[];
   warningsCount: number;

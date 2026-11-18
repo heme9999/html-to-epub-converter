@@ -11,10 +11,12 @@ import {
   getStandardSampleInputs,
   importRawFilesIntoProject,
   loadPersistedWorkspace,
+  loadPersistedWorkspaceSync,
   renameChapter,
   reorderChapter,
   sanitizeRelativePath,
   savePersistedWorkspace,
+  savePersistedWorkspaceSync,
   stripLeadingOrderNumber,
   type RawInputFile,
 } from '../src/lib/epub-engine';
@@ -151,6 +153,8 @@ describe('EPUB 3 Conversion Engine — 11 Mandatory Scenarios', () => {
     expect(project.issues.some((i) => i.code === 'REMOTE_RESOURCE_BLOCKED')).toBe(true);
     const result = await buildEpubPackage(project);
     expect(result.ok).toBe(true);
+    expect(result.report.chapterImageCount).toBe(1);
+    expect(result.report.hasGeneratedCover).toBe(true);
     expect(result.report.packagedImageCount).toBe(2); // 1 matched image + 1 generated default cover
     const entries = unzipSync(result.bytes!);
     const ch1 = strFromU8(entries['EPUB/chapters/chapter-001.xhtml']!);
@@ -370,6 +374,17 @@ describe('EPUB 3 Conversion Engine — 11 Mandatory Scenarios', () => {
     project.metadata.title = 'Long Book Title That Must Persist Across Route Changes';
     project.metadata.author = 'Ada Lovelace';
 
+    savePersistedWorkspaceSync({
+      project,
+      activeChapterId: project.chapters[0]!.id,
+      previewTab: 'toc',
+      mobileStep: 'export',
+    });
+
+    const syncLoaded = loadPersistedWorkspaceSync();
+    expect(syncLoaded).not.toBeNull();
+    expect(syncLoaded?.project.chapters[0]?.title).toBe('Reordered Bilingual Chapter');
+
     await savePersistedWorkspace({
       project,
       activeChapterId: project.chapters[0]!.id,
@@ -392,5 +407,6 @@ describe('EPUB 3 Conversion Engine — 11 Mandatory Scenarios', () => {
     await clearPersistedWorkspace();
     const afterClear = await loadPersistedWorkspace();
     expect(afterClear).toBeNull();
+    expect(loadPersistedWorkspaceSync()).toBeNull();
   });
 });

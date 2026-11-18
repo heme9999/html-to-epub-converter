@@ -1,4 +1,4 @@
-import { imageToDataUri, uint8ToBase64 } from './image-utils';
+import { uint8ToBase64 } from './image-utils';
 import type { EpubProjectState, ImageAsset } from './types';
 
 export type PersistedPreviewTab = 'reader' | 'toc' | 'source';
@@ -74,8 +74,6 @@ function deserializeFromStorage(
       bytes,
     };
   });
-  // Ensure previewHtml still has usable data URIs (or kept intact)
-  void imageToDataUri;
   return {
     project: {
       ...raw.project,
@@ -106,16 +104,57 @@ function openWorkspaceDb(): Promise<IDBDatabase> {
   });
 }
 
+/**
+ * Synchronously writes workspace state to localStorage so instant navigation never races async IndexedDB.
+ */
+export function savePersistedWorkspaceSync(
+  payload: Omit<PersistedWorkspacePayload, 'savedAt'> & { savedAt?: number }
+): PersistedWorkspacePayload {
+  const fullPayload: PersistedWorkspacePayload = {
+    project: payload.project,
+    activeChapterId: payload.activeChapterId,
+    previewTab: payload.previewTab,
+    mobileStep: payload.mobileStep,
+    savedAt: payload.savedAt ?? Date.now(),
+  };
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const serialized = serializeForStorage(fullPayload);
+      const json = JSON.stringify(serialized);
+      if (json.length < 4_200_000) {
+        localStorage.setItem(LS_FALLBACK_KEY, json);
+      } else {
+        localStorage.removeItem(LS_FALLBACK_KEY);
+      }
+    } catch {
+      // Ignore quota exceeded; IndexedDB still handles large payloads asynchronously
+    }
+  }
+  return fullPayload;
+}
+
+/**
+ * Synchronously restores workspace state from localStorage on initial mount before async IndexedDB resolves.
+ */
+export function loadPersistedWorkspaceSync(): PersistedWorkspacePayload | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const rawJson = localStorage.getItem(LS_FALLBACK_KEY);
+    if (!rawJson) return null;
+    const parsed = JSON.parse(rawJson) as SerializedWorkspacePayload;
+    return deserializeFromStorage(parsed);
+  } catch {
+    return null;
+  }
+}
+
 export async function savePersistedWorkspace(
   payload: Omit<PersistedWorkspacePayload, 'savedAt'>
 ): Promise<void> {
-  const fullPayload: PersistedWorkspacePayload = {
-    ...payload,
-    savedAt: Date.now(),
-  };
+  // Always persist synchronously FIRST so rapid link clicks never race async IndexedDB opens
+  const fullPayload = savePersistedWorkspaceSync(payload);
   const serialized = serializeForStorage(fullPayload);
 
-  let savedToIdb = false;
   if (typeof indexedDB !== 'undefined') {
     try {
       const db = await openWorkspaceDb();
@@ -127,61 +166,50 @@ export async function savePersistedWorkspace(
         tx.onerror = () => reject(tx.error ?? new Error('IDB write failed'));
       });
       db.close();
-      savedToIdb = true;
     } catch {
-      savedToIdb = false;
-    }
-  }
-
-  // Also keep localStorage synced when payload fits (< ~4MB) as instant/fallback backup
-  if (typeof localStorage !== 'undefined') {
-    try {
-      const json = JSON.stringify(serialized);
-      if (json.length < 4_000_000 || !savedToIdb) {
-        localStorage.setItem(LS_FALLBACK_KEY, json);
-      } else {
-        localStorage.removeItem(LS_FALLBACK_KEY);
-      }
-    } catch {
-      // Ignore quota exceeded on localStorage when IndexedDB succeeded
+      // localStorage already succeeded for payloads under ~4MB
     }
   }
 }
 
 export async function loadPersistedWorkspace(): Promise<PersistedWorkspacePayload | null> {
+  const lsRecord = loadPersistedWorkspaceSync();
+  let idbRecord: PersistedWorkspacePayload | null = null;
+
   if (typeof indexedDB !== 'undefined') {
     try {
       const db = await openWorkspaceDb();
-      const record = await new Promise<SerializedWorkspacePayload | undefined>((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const req = store.get(RECORD_KEY);
-        req.onsuccess = () => resolve(req.result as SerializedWorkspacePayload | undefined);
-        req.onerror = () => reject(req.error ?? new Error('IDB read failed'));
-      });
+      const rawRecord = await new Promise<SerializedWorkspacePayload | undefined>(
+        (resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const req = store.get(RECORD_KEY);
+          req.onsuccess = () => resolve(req.result as SerializedWorkspacePayload | undefined);
+          req.onerror = () => reject(req.error ?? new Error('IDB read failed'));
+        }
+      );
       db.close();
-      const restored = deserializeFromStorage(record);
-      if (restored) return restored;
+      idbRecord = deserializeFromStorage(rawRecord);
     } catch {
-      // Fall through to localStorage
+      idbRecord = null;
     }
   }
 
-  if (typeof localStorage !== 'undefined') {
-    try {
-      const rawJson = localStorage.getItem(LS_FALLBACK_KEY);
-      if (!rawJson) return null;
-      const parsed = JSON.parse(rawJson) as SerializedWorkspacePayload;
-      return deserializeFromStorage(parsed);
-    } catch {
-      return null;
-    }
+  if (lsRecord && idbRecord) {
+    return lsRecord.savedAt >= idbRecord.savedAt ? lsRecord : idbRecord;
   }
-
-  return null;
+  return lsRecord ?? idbRecord;
 }
 
 export async function clearPersistedWorkspace(): Promise<void> {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.removeItem(LS_FALLBACK_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
   if (typeof indexedDB !== 'undefined') {
     try {
       const db = await openWorkspaceDb();
@@ -193,14 +221,6 @@ export async function clearPersistedWorkspace(): Promise<void> {
         tx.onerror = () => reject(tx.error ?? new Error('IDB delete failed'));
       });
       db.close();
-    } catch {
-      // ignore
-    }
-  }
-
-  if (typeof localStorage !== 'undefined') {
-    try {
-      localStorage.removeItem(LS_FALLBACK_KEY);
     } catch {
       // ignore
     }

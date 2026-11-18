@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   attachMissingImageFile,
   buildEpubPackage,
@@ -13,10 +13,12 @@ import {
   importRawFilesIntoProject,
   LANGUAGE_OPTIONS,
   loadPersistedWorkspace,
+  loadPersistedWorkspaceSync,
   renameChapter,
   reorderChapter,
   rewriteBookLinks,
   savePersistedWorkspace,
+  savePersistedWorkspaceSync,
   serializeChapterToXhtml,
   stripLeadingOrderNumber,
   type BuildEpubResult,
@@ -199,60 +201,121 @@ export default function ConverterApp() {
   const authorInputId = useId();
   const langSelectId = useId();
 
-  // Hydrate persisted workspace across page navigation or refresh
-  useEffect(() => {
+  // Keep a synchronous ref of the latest state for instant capture-phase click / pagehide flush
+  const latestWorkspaceRef = useRef({
+    project,
+    activeChapterId,
+    previewTab,
+    mobileStep,
+  });
+  latestWorkspaceRef.current = {
+    project,
+    activeChapterId,
+    previewTab,
+    mobileStep,
+  };
+  const hydratedSavedAtRef = useRef<number>(0);
+
+  const applyRestoredWorkspace = useCallback(
+    (saved: NonNullable<ReturnType<typeof loadPersistedWorkspaceSync>>) => {
+      if (saved.project.chapters.length === 0) return;
+      hydratedSavedAtRef.current = saved.savedAt;
+      setProject(saved.project);
+      setActiveChapterId(saved.activeChapterId ?? saved.project.chapters[0]?.id ?? null);
+      setPreviewTab(saved.previewTab ?? 'reader');
+      setMobileStep(saved.mobileStep ?? 'files');
+      setDraftSavedAt(saved.savedAt);
+    },
+    []
+  );
+
+  // Hydrate synchronously on mount before paint (no async race), then reconcile with IndexedDB
+  useLayoutEffect(() => {
+    const syncSaved = loadPersistedWorkspaceSync();
+    if (syncSaved && syncSaved.project.chapters.length > 0) {
+      applyRestoredWorkspace(syncSaved);
+    }
+    setHasHydratedStorage(true);
+
     let active = true;
-    void (async () => {
-      try {
-        const saved = await loadPersistedWorkspace();
-        if (!active) return;
-        if (saved && saved.project.chapters.length > 0) {
-          setProject(saved.project);
-          setActiveChapterId(saved.activeChapterId ?? saved.project.chapters[0]?.id ?? null);
-          setPreviewTab(saved.previewTab ?? 'reader');
-          setMobileStep(saved.mobileStep ?? 'files');
-          setDraftSavedAt(saved.savedAt);
-        }
-      } finally {
-        if (active) setHasHydratedStorage(true);
+    void loadPersistedWorkspace().then((asyncSaved) => {
+      if (!active || !asyncSaved || asyncSaved.project.chapters.length === 0) return;
+      if (asyncSaved.savedAt > hydratedSavedAtRef.current) {
+        applyRestoredWorkspace(asyncSaved);
       }
-    })();
+    });
     return () => {
       active = false;
     };
-  }, []);
+  }, [applyRestoredWorkspace]);
 
-  // Auto-save workspace changes to IndexedDB/localStorage so switching to guides never loses edits
+  // Persist synchronously on every edit (0ms debounce) + update IndexedDB in background
   useEffect(() => {
     if (!hasHydratedStorage) return;
     if (project.chapters.length === 0 && project.images.length === 0) {
       return;
     }
-    const timer = setTimeout(() => {
-      void savePersistedWorkspace({
-        project,
-        activeChapterId,
-        previewTab,
-        mobileStep,
-      }).then(() => setDraftSavedAt(Date.now()));
-    }, 120);
-    return () => clearTimeout(timer);
+    const saved = savePersistedWorkspaceSync({
+      project,
+      activeChapterId,
+      previewTab,
+      mobileStep,
+    });
+    hydratedSavedAtRef.current = saved.savedAt;
+    setDraftSavedAt(saved.savedAt);
+    void savePersistedWorkspace({
+      project,
+      activeChapterId,
+      previewTab,
+      mobileStep,
+    });
   }, [hasHydratedStorage, project, activeChapterId, previewTab, mobileStep]);
 
-  // Flush persistence synchronously/immediately before navigating away
+  // Flush synchronously before any link click / tab switch / pagehide, and re-sync on BFCache pageshow
   useEffect(() => {
-    if (!hasHydratedStorage || project.chapters.length === 0) return;
-    const flush = () => {
-      void savePersistedWorkspace({
-        project,
-        activeChapterId,
-        previewTab,
-        mobileStep,
-      });
+    const flushNow = () => {
+      const curr = latestWorkspaceRef.current;
+      if (curr.project.chapters.length === 0 && curr.project.images.length === 0) return;
+      savePersistedWorkspaceSync(curr);
+      void savePersistedWorkspace(curr);
     };
-    window.addEventListener('pagehide', flush);
-    return () => window.removeEventListener('pagehide', flush);
-  }, [hasHydratedStorage, project, activeChapterId, previewTab, mobileStep]);
+
+    const handleCaptureClick = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest('a[href]')) {
+        flushNow();
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        flushNow();
+      }
+    };
+
+    const handlePageShow = () => {
+      const syncSaved = loadPersistedWorkspaceSync();
+      if (
+        syncSaved &&
+        syncSaved.project.chapters.length > 0 &&
+        syncSaved.savedAt >= hydratedSavedAtRef.current &&
+        latestWorkspaceRef.current.project.chapters.length === 0
+      ) {
+        applyRestoredWorkspace(syncSaved);
+      }
+    };
+
+    document.addEventListener('click', handleCaptureClick, true);
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', flushNow);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      document.removeEventListener('click', handleCaptureClick, true);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', flushNow);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [applyRestoredWorkspace]);
 
   // Revoke previous Blob URL whenever exportResult changes
   useEffect(() => {
@@ -1518,7 +1581,7 @@ export default function ConverterApp() {
                           }}
                           className="accent-[#0a84ff]"
                         />
-                        Auto-generate typographic cover
+                        Auto-generate typographic cover (adds 1 generated cover image)
                       </label>
                     </div>
                   </div>
@@ -1618,11 +1681,21 @@ export default function ConverterApp() {
                   </div>
                   <div>
                     <dt className="text-emerald-800">Packaged Images</dt>
-                    <dd className="font-bold">{exportResult.report.packagedImageCount}</dd>
+                    <dd className="font-bold">
+                      {exportResult.report.packagedImageCount} (
+                      {exportResult.report.chapterImageCount} in chapters
+                      {exportResult.report.hasGeneratedCover ? ' + 1 generated cover' : ''})
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-emerald-800">Cover Included</dt>
-                    <dd className="font-bold">{exportResult.report.hasCover ? 'Yes' : 'No'}</dd>
+                    <dd className="font-bold">
+                      {exportResult.report.hasGeneratedCover
+                        ? 'Yes (generated cover)'
+                        : exportResult.report.hasCover
+                          ? 'Yes (custom cover)'
+                          : 'No'}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-emerald-800">Non-blocking Warnings</dt>
@@ -1717,9 +1790,9 @@ export default function ConverterApp() {
         </div>
       )}
 
-      {/* Mobile Sticky Action Bar (< lg): sticky within workspace so it never covers content below or scrolled end-of-panel cards */}
+      {/* Mobile Sticky Action Bar (< lg): opaque solid white so underlying text never bleeds through */}
       {project.chapters.length > 0 && (
-        <div className="glass-bar sticky bottom-0 z-30 -mx-4 mt-4 border-t border-black/10 px-4 pt-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden">
+        <div className="sticky bottom-0 z-30 -mx-4 mt-4 border-t border-black/15 bg-white px-4 pt-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_14px_rgba(0,0,0,0.08)] lg:hidden">
           <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
             <div className="min-w-0 text-xs">
               <div className="truncate font-bold text-[#1d1d1f]">
