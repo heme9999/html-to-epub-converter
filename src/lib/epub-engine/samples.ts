@@ -45,9 +45,9 @@ export function getStandardSampleInputs(): {
 } {
   const ch1Html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>1. Saving Web Articles for E-Ink Readers</title></head>
+<head><meta charset="utf-8"><title>Saving Web Articles for E-Ink Readers</title></head>
 <body>
-  <h1>1. Saving Web Articles for E-Ink Readers</h1>
+  <h1>Saving Web Articles for E-Ink Readers</h1>
   <p>Long-form technical essays and personal study notes read far more comfortably on an e-ink screen than in a cluttered browser tab. Converting saved HTML pages into a standard <strong>EPUB 3</strong> package turns loose folders into a portable, reflowable book.</p>
   <blockquote id="core-principle">
     <p>Reflowable ebooks let readers adjust font size, margins, and line spacing on any device without horizontal scrolling.</p>
@@ -72,9 +72,9 @@ export function getStandardSampleInputs(): {
 
   const ch2Html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>2. Reflowable Typography &amp; Bilingual Text (中英文混排)</title></head>
+<head><meta charset="utf-8"><title>Reflowable Typography &amp; Bilingual Text (中英文混排)</title></head>
 <body>
-  <h1>2. Reflowable Typography &amp; Bilingual Text</h1>
+  <h1>Reflowable Typography &amp; Bilingual Text</h1>
   <p>当一篇文章同时包含中文与英文内容时（例如技术文档、读书笔记或双语对照材料），EPUB 3 必须声明完整的 UTF-8 编码与清晰的语义层级。</p>
   <h2 id="typography-rules">Core Formatting Rules (排版规范)</h2>
   <p>Good conversion strips hardcoded pixel widths while keeping headings, paragraphs, emphasis, and structured data tables intact.</p>
@@ -114,9 +114,9 @@ export function getStandardSampleInputs(): {
 
   const ch3Html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>3. Offline Reading &amp; EPUBCheck Checklist</title></head>
+<head><meta charset="utf-8"><title>Offline Reading &amp; EPUBCheck Checklist</title></head>
 <body>
-  <h1>3. Offline Reading &amp; EPUBCheck Checklist</h1>
+  <h1>Offline Reading &amp; EPUBCheck Checklist</h1>
   <p>Before loading a compiled ebook onto your e-reader, verify these four items:</p>
   <ol>
     <li><strong>Cover &amp; Metadata</strong>: Title, author, and primary language code match your library.</li>

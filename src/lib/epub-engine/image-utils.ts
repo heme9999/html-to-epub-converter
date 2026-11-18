@@ -327,16 +327,18 @@ export async function renderTypographicCoverPng(
         ctx.font = '600 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         ctx.fillText('EPUB 3 EDITION', 124, 172);
 
-        // Title wrap
+        // Title wrap with adaptive font size so long titles fit cleanly without clipping
         ctx.fillStyle = '#F8FAFC';
-        ctx.font = '700 62px Georgia, "Noto Serif SC", serif';
         const cleanTitle = (title || 'Untitled Book').trim();
+        const titleFontSize = cleanTitle.length > 42 ? 46 : cleanTitle.length > 26 ? 54 : 62;
+        const lineHeight = Math.round(titleFontSize * 1.28);
+        ctx.font = `700 ${titleFontSize}px Georgia, "Noto Serif SC", serif`;
         const words = cleanTitle.split(/\s+/);
         const lines: string[] = [];
         let current = '';
         for (const word of words) {
           const test = current ? `${current} ${word}` : word;
-          if (ctx.measureText(test).width > width - 260 && current) {
+          if (ctx.measureText(test).width > width - 256 && current) {
             lines.push(current);
             current = word;
           } else {
@@ -344,8 +346,8 @@ export async function renderTypographicCoverPng(
           }
         }
         if (current) lines.push(current);
-        lines.slice(0, 7).forEach((line, idx) => {
-          ctx.fillText(line, 124, 340 + idx * 80);
+        lines.slice(0, 10).forEach((line, idx) => {
+          ctx.fillText(line, 124, 310 + idx * lineHeight);
         });
 
         // Divider rule

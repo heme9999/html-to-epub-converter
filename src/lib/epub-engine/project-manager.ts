@@ -41,7 +41,7 @@ export function createEmptyProject(): EpubProjectState {
       description: '',
       coverImageId: null,
       generateDefaultCover: true,
-      includeInBookToc: false,
+      includeInBookToc: true,
     },
     issues: [],
     totalInputBytes: 0,

@@ -17,6 +17,21 @@
     background-color: var(--surface-page);
   }
 
+  html {
+    scroll-padding-top: 6.5rem;
+    scroll-padding-bottom: 7.5rem;
+  }
+
+  @media (min-width: 640px) {
+    html {
+      scroll-padding-top: 4.75rem;
+    }
+  }
+
+  h1, h2, h3, #main-content, #converter-workspace {
+    scroll-margin-top: 6.5rem;
+  }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -52,11 +67,20 @@
   transform: scale(0.975);
 }
 
-/* Translucent floating header & mobile action bar */
+/* Floating header & sticky mobile action bar (high opacity prevents text bleed-through) */
 .glass-bar {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-transparency: reduce) {

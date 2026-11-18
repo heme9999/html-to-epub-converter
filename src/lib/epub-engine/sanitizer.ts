@@ -191,6 +191,16 @@ function deriveTitleFromFilename(fileName: string): string {
   return formatted || 'Untitled Chapter';
 }
 
+/**
+ * Strips leading numerical order prefixes (e.g. "1. ", "02 - ", "3) ") so numbered TOC views
+ * never display doubled numbering like "1. 2. Chapter" after chapters are reordered.
+ */
+export function stripLeadingOrderNumber(title: string): string {
+  const trimmed = title.trim();
+  const stripped = trimmed.replace(/^\d{1,3}\s*[\.\)\-:–—]\s+/, '').trim();
+  return stripped || trimmed;
+}
+
 function isUnsafeUrl(url: string): boolean {
   const normalized = url.replace(/[\u0000-\u0020]+/g, '').toLowerCase();
   return (

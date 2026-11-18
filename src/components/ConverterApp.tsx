@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import {
   attachMissingImageFile,
   buildEpubPackage,
+  clearPersistedWorkspace,
   createEmptyProject,
   DEFAULT_LIMITS,
   deleteChapter,
@@ -11,10 +12,13 @@ import {
   imageToDataUri,
   importRawFilesIntoProject,
   LANGUAGE_OPTIONS,
+  loadPersistedWorkspace,
   renameChapter,
   reorderChapter,
   rewriteBookLinks,
+  savePersistedWorkspace,
   serializeChapterToXhtml,
+  stripLeadingOrderNumber,
   type BuildEpubResult,
   type ConversionIssue,
   type EpubProjectState,
@@ -152,6 +156,9 @@ export default function ConverterApp() {
 
   const [isImporting, setIsImporting] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const exportSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Form validation & export state
   const [titleTouched, setTitleTouched] = useState(false);
@@ -191,6 +198,61 @@ export default function ConverterApp() {
   const titleErrorId = useId();
   const authorInputId = useId();
   const langSelectId = useId();
+
+  // Hydrate persisted workspace across page navigation or refresh
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const saved = await loadPersistedWorkspace();
+        if (!active) return;
+        if (saved && saved.project.chapters.length > 0) {
+          setProject(saved.project);
+          setActiveChapterId(saved.activeChapterId ?? saved.project.chapters[0]?.id ?? null);
+          setPreviewTab(saved.previewTab ?? 'reader');
+          setMobileStep(saved.mobileStep ?? 'files');
+          setDraftSavedAt(saved.savedAt);
+        }
+      } finally {
+        if (active) setHasHydratedStorage(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Auto-save workspace changes to IndexedDB/localStorage so switching to guides never loses edits
+  useEffect(() => {
+    if (!hasHydratedStorage) return;
+    if (project.chapters.length === 0 && project.images.length === 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      void savePersistedWorkspace({
+        project,
+        activeChapterId,
+        previewTab,
+        mobileStep,
+      }).then(() => setDraftSavedAt(Date.now()));
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [hasHydratedStorage, project, activeChapterId, previewTab, mobileStep]);
+
+  // Flush persistence synchronously/immediately before navigating away
+  useEffect(() => {
+    if (!hasHydratedStorage || project.chapters.length === 0) return;
+    const flush = () => {
+      void savePersistedWorkspace({
+        project,
+        activeChapterId,
+        previewTab,
+        mobileStep,
+      });
+    };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [hasHydratedStorage, project, activeChapterId, previewTab, mobileStep]);
 
   // Revoke previous Blob URL whenever exportResult changes
   useEffect(() => {
@@ -346,6 +408,8 @@ export default function ConverterApp() {
 
   const handleResetProject = useCallback(() => {
     clearExportOutput();
+    void clearPersistedWorkspace();
+    setDraftSavedAt(null);
     setProject(createEmptyProject());
     setActiveChapterId(null);
     setTitleError(null);
@@ -490,6 +554,9 @@ export default function ConverterApp() {
           `EPUB 3 ready (${formatBytes(result.report.totalBytes)}, ${result.report.chapterCount} chapter(s)).`
         );
         setAnnounceText(`EPUB 3 conversion completed: ${result.fileName}`);
+        setTimeout(() => {
+          exportSectionRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 60);
       } catch (err) {
         setExportError(
           err instanceof Error
@@ -676,16 +743,20 @@ export default function ConverterApp() {
 
   return (
     <section
+      id="converter-workspace"
       aria-label="HTML to EPUB Converter Workspace"
-      className="mx-auto max-w-7xl px-4 pb-10 sm:px-6"
+      className="mx-auto max-w-7xl scroll-mt-28 px-4 pb-10 sm:scroll-mt-20 sm:px-6"
     >
-      {/* Hidden native file pickers */}
+      {/* Hidden native file pickers (excluded from accessibility tree so browser-locale Chinese text is not exposed) */}
       <input
         ref={filesInputRef}
         type="file"
         multiple
         accept=".html,.htm,.xhtml,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg"
-        className="sr-only"
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+        className="hidden"
         onChange={(e) => {
           if (e.target.files) void handleImportFiles(e.target.files);
           e.target.value = '';
@@ -696,7 +767,10 @@ export default function ConverterApp() {
         type="file"
         multiple
         {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
-        className="sr-only"
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+        className="hidden"
         onChange={(e) => {
           if (e.target.files) void handleImportFiles(e.target.files);
           e.target.value = '';
@@ -706,7 +780,10 @@ export default function ConverterApp() {
         ref={coverInputRef}
         type="file"
         accept=".jpg,.jpeg,.png,.webp,.gif,.bmp"
-        className="sr-only"
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+        className="hidden"
         onChange={(e) => {
           void handleUploadCustomCover(e.target.files);
           e.target.value = '';
@@ -716,7 +793,10 @@ export default function ConverterApp() {
         ref={missingAttachInputRef}
         type="file"
         accept=".jpg,.jpeg,.png,.webp,.gif,.bmp"
-        className="sr-only"
+        hidden
+        aria-hidden="true"
+        tabIndex={-1}
+        className="hidden"
         onChange={(e) => {
           void handleAttachMissingImage(e.target.files);
           e.target.value = '';
@@ -800,6 +880,11 @@ export default function ConverterApp() {
                 {warnings.length} Warning{warnings.length === 1 ? '' : 's'}
               </span>
             )}
+            {project.chapters.length > 0 && draftSavedAt && (
+              <span className="rounded-lg bg-emerald-100/80 px-2.5 py-1 font-medium text-emerald-900">
+                Draft saved in browser
+              </span>
+            )}
           </div>
         </div>
 
@@ -881,7 +966,7 @@ export default function ConverterApp() {
 
       {/* Main 3-Column Studio Workspace */}
       {project.chapters.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[315px_minmax(0,1fr)_335px] lg:items-start">
+        <div className="mt-4 grid grid-cols-1 gap-4 pb-4 lg:grid-cols-[315px_minmax(0,1fr)_335px] lg:items-start lg:pb-0">
           {/* LEFT COLUMN: Chapters & Assets */}
           <section
             aria-label="Chapters and Local Images"
@@ -1205,7 +1290,7 @@ export default function ConverterApp() {
                           className="flex w-full items-center justify-between gap-2 text-left font-semibold text-[#0a84ff] hover:underline"
                         >
                           <span>
-                            {idx + 1}. {ch.title}
+                            {idx + 1}. {stripLeadingOrderNumber(ch.title)}
                           </span>
                           <span className="shrink-0 font-mono text-[11px] text-[#6e6e73]">
                             chapter-{String(idx + 1).padStart(3, '0')}.xhtml
@@ -1365,23 +1450,23 @@ export default function ConverterApp() {
                       <img
                         src={imageToDataUri(selectedCoverAsset.bytes, selectedCoverAsset.mediaType)}
                         alt="Selected book cover preview"
-                        className="h-20 w-14 shrink-0 rounded-md border border-black/10 object-cover shadow-xs"
+                        className="h-32 w-24 shrink-0 rounded-md border border-black/10 object-cover shadow-xs"
                       />
                     ) : project.metadata.generateDefaultCover ? (
                       <div
                         aria-hidden="true"
-                        className="flex h-20 w-14 shrink-0 flex-col justify-between rounded-md border border-black/15 bg-[#14171f] p-1.5 text-[7px] leading-tight text-white shadow-xs"
+                        className="flex min-h-[8.5rem] w-24 shrink-0 flex-col justify-between gap-1.5 rounded-md border border-black/15 bg-[#14171f] p-2.5 text-[9px] leading-tight text-white shadow-xs"
                       >
-                        <span className="font-semibold text-[#60a5fa]">EPUB 3</span>
-                        <span className="line-clamp-3 font-bold">
+                        <span className="font-semibold tracking-wide text-[#60a5fa]">EPUB 3</span>
+                        <span className="break-words text-[9.5px] leading-snug font-bold">
                           {project.metadata.title || 'Untitled'}
                         </span>
-                        <span className="truncate text-[6px] text-slate-300">
+                        <span className="break-words text-[8px] leading-tight text-slate-300">
                           {project.metadata.author || 'Author'}
                         </span>
                       </div>
                     ) : (
-                      <div className="flex h-20 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-black/20 bg-white text-[10px] text-[#6e6e73]">
+                      <div className="flex min-h-[8.5rem] w-24 shrink-0 items-center justify-center rounded-md border border-dashed border-black/20 bg-white text-[10px] text-[#6e6e73]">
                         No Cover
                       </div>
                     )}
@@ -1502,7 +1587,10 @@ export default function ConverterApp() {
 
             {/* Successful Download & Report Card */}
             {exportResult?.ok && downloadUrl && (
-              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/90 p-4 shadow-xs">
+              <div
+                ref={exportSectionRef}
+                className="scroll-mt-28 rounded-2xl border border-emerald-300 bg-emerald-50/90 p-4 shadow-xs"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-bold text-emerald-950">EPUB 3 Ready</div>
@@ -1629,9 +1717,9 @@ export default function ConverterApp() {
         </div>
       )}
 
-      {/* Mobile Sticky Action Bar (< lg) */}
+      {/* Mobile Sticky Action Bar (< lg): sticky within workspace so it never covers content below or scrolled end-of-panel cards */}
       {project.chapters.length > 0 && (
-        <div className="glass-bar fixed inset-x-0 bottom-0 z-30 border-t border-black/10 px-4 py-2.5 lg:hidden">
+        <div className="glass-bar sticky bottom-0 z-30 -mx-4 mt-4 border-t border-black/10 px-4 pt-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden">
           <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
             <div className="min-w-0 text-xs">
               <div className="truncate font-bold text-[#1d1d1f]">

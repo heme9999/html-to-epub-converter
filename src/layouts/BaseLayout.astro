@@ -76,11 +76,11 @@ const schemas = structuredData
     </a>
 
     <header class="glass-bar sticky top-0 z-40 border-b border-black/10">
-      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <div class="mx-auto flex max-w-7xl flex-col gap-1.5 px-4 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-3">
         <a href="/" class="flex items-center gap-2.5 text-[#1d1d1f] no-underline">
           <span
             aria-hidden="true"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#1d1d1f] text-xs font-bold tracking-tight text-white shadow-xs"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[#1d1d1f] text-[11px] font-bold tracking-tight text-white shadow-xs sm:h-8 sm:w-8 sm:text-xs"
           >
             CB
           </span>
@@ -90,7 +90,7 @@ const schemas = structuredData
           </span>
         </a>
 
-        <nav aria-label="Primary navigation" class="flex flex-wrap items-center gap-1 sm:gap-1.5">
+        <nav aria-label="Primary navigation" class="no-scrollbar flex flex-nowrap items-center gap-1 overflow-x-auto sm:flex-wrap sm:gap-1.5">
           {NAV_LINKS.map((link) => {
             const active =
               Astro.url.pathname === link.href ||
@@ -99,7 +99,7 @@ const schemas = structuredData
               <a
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
-                class={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+                class={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors sm:py-1.5 sm:text-sm ${
                   active
                     ? 'bg-[#1d1d1f] text-white'
                     : 'text-[#515154] hover:bg-black/[0.05] hover:text-[#1d1d1f]'

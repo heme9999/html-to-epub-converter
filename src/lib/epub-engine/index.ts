@@ -8,3 +8,4 @@ export * from './zip-writer';
 export * from './epub-builder';
 export * from './project-manager';
 export * from './samples';
+export * from './storage';

@@ -3,15 +3,19 @@ import { unzipSync, strFromU8 } from 'fflate';
 import {
   attachMissingImageFile,
   buildEpubPackage,
+  clearPersistedWorkspace,
   createEmptyProject,
   deleteChapter,
   encodeSolidAndBandsPng,
   getEdgeCaseSampleInputs,
   getStandardSampleInputs,
   importRawFilesIntoProject,
+  loadPersistedWorkspace,
   renameChapter,
   reorderChapter,
   sanitizeRelativePath,
+  savePersistedWorkspace,
+  stripLeadingOrderNumber,
   type RawInputFile,
 } from '../src/lib/epub-engine';
 
@@ -348,5 +352,45 @@ describe('EPUB 3 Conversion Engine — 11 Mandatory Scenarios', () => {
     const recovered = await buildEpubPackage(project);
     expect(recovered.ok).toBe(true);
     expect(recovered.report.title).toBe('Recovered Book');
+  });
+
+  it('12. enables in-book TOC by default, strips leading order prefixes, and persists workspace across navigations', async () => {
+    const empty = createEmptyProject();
+    expect(empty.metadata.includeInBookToc).toBe(true);
+
+    expect(stripLeadingOrderNumber('2. Reflowable Typography')).toBe('Reflowable Typography');
+    expect(stripLeadingOrderNumber('03 - Offline Checklist')).toBe('Offline Checklist');
+    expect(stripLeadingOrderNumber('Pure Chapter Name')).toBe('Pure Chapter Name');
+
+    const sample = getStandardSampleInputs();
+    let project = createEmptyProject();
+    project = await importRawFilesIntoProject(project, sample.files);
+    project = reorderChapter(project, 1, 0);
+    project = renameChapter(project, project.chapters[0]!.id, 'Reordered Bilingual Chapter');
+    project.metadata.title = 'Long Book Title That Must Persist Across Route Changes';
+    project.metadata.author = 'Ada Lovelace';
+
+    await savePersistedWorkspace({
+      project,
+      activeChapterId: project.chapters[0]!.id,
+      previewTab: 'toc',
+      mobileStep: 'export',
+    });
+
+    const loaded = await loadPersistedWorkspace();
+    expect(loaded).not.toBeNull();
+    expect(loaded?.project.metadata.title).toBe(
+      'Long Book Title That Must Persist Across Route Changes'
+    );
+    expect(loaded?.project.metadata.author).toBe('Ada Lovelace');
+    expect(loaded?.project.chapters[0]?.title).toBe('Reordered Bilingual Chapter');
+    expect(loaded?.project.images).toHaveLength(2);
+    expect(loaded?.project.images[0]?.bytes.length).toBeGreaterThan(0);
+    expect(loaded?.previewTab).toBe('toc');
+    expect(loaded?.mobileStep).toBe('export');
+
+    await clearPersistedWorkspace();
+    const afterClear = await loadPersistedWorkspace();
+    expect(afterClear).toBeNull();
   });
 });
