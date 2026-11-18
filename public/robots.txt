@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://html-to-epub-converter.pages.dev/sitemap.xml

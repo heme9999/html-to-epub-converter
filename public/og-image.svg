@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#F5F5F7"/>
+  <rect x="48" y="48" width="1104" height="534" rx="28" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="2"/>
+  <rect x="96" y="102" width="224" height="36" rx="18" fill="#1D1D1F"/>
+  <text x="208" y="126" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="16" font-weight="700" text-anchor="middle">CHAPTERBIND · EPUB 3</text>
+  <text x="96" y="218" fill="#1D1D1F" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="56" font-weight="800">HTML to EPUB Converter</text>
+  <text x="96" y="276" fill="#515154" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="26" font-weight="500">Merge HTML files and local images into reflowable EPUB 3 ebooks.</text>
+  <rect x="96" y="340" width="300" height="170" rx="18" fill="#F5F5F7" stroke="#E5E7EB"/>
+  <text x="122" y="384" fill="#1D1D1F" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="700">1. Import Chapters</text>
+  <text x="122" y="422" fill="#515154" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">HTML, HTM &amp; image folders</text>
+  <text x="122" y="454" fill="#515154" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Reorder &amp; rename inline</text>
+  <rect x="436" y="340" width="320" height="170" rx="18" fill="#F5F5F7" stroke="#E5E7EB"/>
+  <text x="462" y="384" fill="#1D1D1F" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="700">2. Clean &amp; Preview</text>
+  <text x="462" y="422" fill="#515154" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Strips scripts &amp; unsafe tags</text>
+  <text x="462" y="454" fill="#515154" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Sandboxed preview + TOC</text>
+  <rect x="796" y="340" width="308" height="170" rx="18" fill="#0A84FF"/>
+  <text x="822" y="384" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="700">3. Export EPUB 3</text>
+  <text x="822" y="422" fill="#E0F2FE" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Valid OPF, nav.xhtml &amp; cover</text>
+  <text x="822" y="454" fill="#E0F2FE" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Runs locally in browser</text>
+</svg>

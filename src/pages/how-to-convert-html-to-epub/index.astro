@@ -1,0 +1,101 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const title = 'How to Convert HTML to EPUB with Images & Chapters | ChapterBind';
+const description =
+  'Step-by-step guide to saving web articles as HTML, bundling companion image folders, ordering chapters, setting metadata, and exporting valid EPUB 3 ebooks.';
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/how-to-convert-html-to-epub/">
+  <article class="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <header class="rounded-2xl border border-black/10 bg-white p-6 shadow-xs sm:p-8">
+      <div class="text-xs font-bold tracking-wider text-[#0a84ff] uppercase">Guide</div>
+      <h1 class="display-heading mt-2 text-3xl font-extrabold text-[#1d1d1f] sm:text-4xl">
+        How to Convert HTML to EPUB with Images and Chapters
+      </h1>
+      <p class="mt-3 text-base leading-relaxed text-[#515154]">
+        Converting saved articles or multi-chapter HTML manuscripts into a reliable EPUB 3 ebook works best when you organize local files and images properly before packaging.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <a
+          href="/"
+          class="btn-tactile inline-flex items-center rounded-xl bg-[#0a84ff] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0070e0]"
+        >
+          Open HTML to EPUB Converter →
+        </a>
+        <a
+          href="/samples/chapterbind-sample-source.zip"
+          download="chapterbind-sample-source.zip"
+          class="btn-tactile inline-flex items-center rounded-xl border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-[#1d1d1f] hover:bg-[#f5f5f7]"
+        >
+          Download Sample HTML Folder (.zip)
+        </a>
+      </div>
+    </header>
+
+    <div class="mt-8 space-y-6">
+      <section class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+        <h2 class="text-xl font-bold text-[#1d1d1f]">1. Saving Web Articles cleanly as HTML + Images</h2>
+        <p class="mt-2 text-sm leading-relaxed text-[#515154]">
+          ChapterBind reads local files from your device and never fetches remote URLs automatically. If you want images inside a saved webpage to appear in your EPUB:
+        </p>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-[#515154]">
+          <li>
+            In Chrome, Edge, Safari, or Firefox, press <code>Ctrl+S</code> (Windows/Linux) or <code>Cmd+S</code> (macOS) and select <strong>Webpage, Complete</strong>. This saves both <code>article.html</code> and a companion <code>article_files/</code> folder containing local images.
+          </li>
+          <li>
+            Keep the <code>.html</code> file and its companion folder together inside one parent directory, then click <strong>Select Folder</strong> in <a href="/" class="font-semibold text-[#0a84ff] hover:underline">the converter</a>—or hold Ctrl/Cmd to select the HTML file and image files together.
+          </li>
+          <li>
+            Alternatively, if you use a static site generator or Markdown-to-HTML tool, export chapters with relative image links such as <code>&lt;img src="images/diagram.png" alt="..."&gt;</code>.
+          </li>
+        </ul>
+      </section>
+
+      <section class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+        <h2 class="text-xl font-bold text-[#1d1d1f]">2. Preparing Multiple Chapters &amp; Internal Links</h2>
+        <p class="mt-2 text-sm leading-relaxed text-[#515154]">
+          When combining multiple articles into one anthology or turning separate chapters into a single book:
+        </p>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-[#515154]">
+          <li>
+            <strong>Use descriptive headings:</strong> ChapterBind derives initial chapter names from the first <code>&lt;h1&gt;</code>/<code>&lt;h2&gt;</code> or <code>&lt;title&gt;</code>, and builds the hierarchical <code>nav.xhtml</code> Table of Contents from <code>h1</code>–<code>h3</code> tags.
+          </li>
+          <li>
+            <strong>Arrange reading order:</strong> After importing, drag chapters by the <code>⋮⋮</code> handle or tap the <strong>↑ / ↓</strong> buttons. You can also edit any chapter title inline before export.
+          </li>
+          <li>
+            <strong>Cross-chapter links:</strong> Links between imported chapters (for example, <code>&lt;a href="chapter2.html#notes"&gt;</code>) are automatically rewritten to EPUB spine filenames like <code>chapter-002.xhtml#notes</code>.
+          </li>
+        </ul>
+      </section>
+
+      <section class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+        <h2 class="text-xl font-bold text-[#1d1d1f]">3. Setting Book Metadata &amp; Cover Art</h2>
+        <p class="mt-2 text-sm leading-relaxed text-[#515154]">
+          E-readers organize your library using the metadata inside <code>EPUB/package.opf</code> rather than the filename alone:
+        </p>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-[#515154]">
+          <li><strong>Book Title (Required):</strong> Appears in your reader shelf and defines the exported <code>.epub</code> filename.</li>
+          <li><strong>Author &amp; Language:</strong> Choose the primary language tag (such as <code>en</code>, <code>zh-CN</code>, or <code>es</code>) so hyphenation and font selection behave properly.</li>
+          <li><strong>Cover Image:</strong> Upload a custom JPEG or PNG cover image, or leave <em>Auto-generate typographic cover</em> checked to create a crisp cover displaying your book title and author.</li>
+        </ul>
+      </section>
+
+      <section class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+        <h2 class="text-xl font-bold text-[#1d1d1f]">4. Opening Your EPUB on Readers</h2>
+        <p class="mt-2 text-sm leading-relaxed text-[#515154]">
+          Once you click <strong>Convert to EPUB</strong> and download the file:
+        </p>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-[#515154]">
+          <li><strong>Apple Books (macOS / iOS):</strong> Double-click the <code>.epub</code> file or share it via AirDrop / Files.</li>
+          <li><strong>Kindle (Send to Kindle):</strong> Upload the EPUB through Amazon’s Send to Kindle web or desktop app.</li>
+          <li><strong>Kobo / Calibre / PocketBook:</strong> Copy the <code>.epub</code> file to your reader over USB or import it into Calibre.</li>
+        </ul>
+        <p class="mt-4 text-xs text-[#6e6e73]">
+          Hit an issue with missing images or broken links? Read our <a href="/html-to-epub-troubleshooting/" class="font-semibold text-[#0a84ff] hover:underline">HTML to EPUB Troubleshooting Guide</a>.
+        </p>
+      </section>
+    </div>
+  </article>
+</BaseLayout>

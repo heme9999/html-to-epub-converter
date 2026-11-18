@@ -1,0 +1,328 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ConverterApp from '@/components/ConverterApp';
+import { SITE } from '@/config/site';
+
+const pageTitle = 'HTML to EPUB Converter – Merge Chapters Online | ChapterBind';
+const pageDescription =
+  'Convert single or multiple HTML files and local images into a reflowable EPUB 3 ebook in your browser. Reorder chapters, preview TOC, and download free.';
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'ChapterBind HTML to EPUB Converter',
+  url: `${SITE.baseUrl}/`,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  description: pageDescription,
+  featureList: [
+    'Convert single or multiple HTML/HTM files into a reflowable EPUB 3 ebook',
+    'Import companion folders and match relative JPEG/PNG local images',
+    'Reorder, rename, and remove chapters with drag-and-drop or up/down buttons',
+    'Edit book title, author, language, and cover image with live TOC preview',
+    'Sanitize untrusted scripts, forms, iframes, and inline event handlers in browser',
+  ],
+};
+
+const faqItems = [
+  {
+    q: 'Can I merge multiple HTML files into one EPUB book?',
+    a: 'Yes. Select multiple .html or .htm files—or an entire saved folder—and arrange them in the left chapter panel. Each file becomes a separate XHTML chapter in the EPUB 3 spine and Table of Contents.',
+  },
+  {
+    q: 'How do local images inside saved web pages get packaged?',
+    a: 'When you select both the HTML file and its companion image folder, ChapterBind matches relative <img src="..."> paths against your imported JPEG and PNG files, bundles them into EPUB/images/, and rewrites links cleanly.',
+  },
+  {
+    q: 'Are my HTML files or images uploaded to a server?',
+    a: 'No. HTML parsing, DOM sanitization, image matching, and EPUB ZIP packaging run inside your browser tab. You can confirm zero file uploads in your browser Network inspector during conversion.',
+  },
+  {
+    q: 'Why does the converted EPUB look simpler than the original webpage?',
+    a: 'Web pages rely on fixed-pixel sidebars, JavaScript widgets, and external CSS that break on e-ink screens. ChapterBind targets clean, reflowable EPUB 3 typography so text wraps comfortably across font sizes.',
+  },
+  {
+    q: 'What happens if an image is missing or a link points to an unimported page?',
+    a: 'Missing local images and unresolved internal HTML links appear as non-blocking warnings. You can attach the missing image inline before export or continue with readable fallback text.',
+  },
+  {
+    q: 'Which image formats and file limits apply in Phase 1?',
+    a: 'JPEG and PNG images are packaged directly; WebP, GIF, and BMP images are converted to PNG in supported browsers. Limits are 50 total files, 30 chapters, 5 MB per HTML file, 10 MB / 16 MP per image, and 50 MB total.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.a,
+    },
+  })),
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonicalPath="/"
+  structuredData={[webAppSchema, faqSchema]}
+>
+  {/* Compact Above-the-Fold Hero */}
+  <section class="mx-auto max-w-7xl px-4 pt-6 pb-4 sm:px-6 sm:pt-8">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="display-heading text-3xl font-extrabold text-[#1d1d1f] sm:text-4xl">
+          HTML to EPUB Converter
+        </h1>
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#515154] sm:text-base">
+          Import HTML chapters and local images, edit chapter order, cover, and Table of Contents, preview safely, and export an EPUB 3 ebook directly in your browser.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2 text-xs text-[#6e6e73]">
+        <span class="rounded-full border border-black/10 bg-white px-3 py-1 font-medium">
+          No sign-up required
+        </span>
+        <span class="rounded-full border border-black/10 bg-white px-3 py-1 font-medium">
+          EPUB 3.0 / 3.3 output
+        </span>
+      </div>
+    </div>
+  </section>
+
+  {/* Interactive Tool Workspace (Above the Fold) */}
+  <ConverterApp client:load />
+
+  {/* Below-the-fold Documentation & SEO Structure */}
+  <div class="mx-auto mt-8 max-w-7xl space-y-12 px-4 sm:px-6">
+    {/* How It Works */}
+    <section aria-labelledby="how-to-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <h2 id="how-to-heading" class="text-2xl font-bold text-[#1d1d1f]">
+        How to Convert HTML to EPUB
+      </h2>
+      <p class="mt-2 max-w-3xl text-sm text-[#515154]">
+        Follow four steps to turn a single saved article or an entire folder of HTML chapters into a clean ebook.
+      </p>
+      <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-black/8 bg-[#f5f5f7]/65 p-4">
+          <div class="text-xs font-bold text-[#0a84ff]">STEP 1</div>
+          <h3 class="mt-1 text-base font-bold text-[#1d1d1f]">Add HTML &amp; Images</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-[#515154]">
+            Click <strong>Add HTML &amp; Images</strong> or <strong>Select Folder</strong> to import one or multiple <code>.html</code> / <code>.htm</code> files along with local JPEG/PNG assets, or load the Sample Book to test first.
+          </p>
+        </div>
+        <div class="rounded-xl border border-black/8 bg-[#f5f5f7]/65 p-4">
+          <div class="text-xs font-bold text-[#0a84ff]">STEP 2</div>
+          <h3 class="mt-1 text-base font-bold text-[#1d1d1f]">Arrange Chapters</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-[#515154]">
+            Drag chapters by the handle or tap the <strong>↑ / ↓</strong> buttons to set reading order, edit chapter titles inline, and delete extra files you do not want in the book.
+          </p>
+        </div>
+        <div class="rounded-xl border border-black/8 bg-[#f5f5f7]/65 p-4">
+          <div class="text-xs font-bold text-[#0a84ff]">STEP 3</div>
+          <h3 class="mt-1 text-base font-bold text-[#1d1d1f]">Preview &amp; Check Warnings</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-[#515154]">
+            Inspect each chapter inside the isolated Reader Preview, browse the auto-generated Table of Contents, set book title/author/cover, and resolve any missing local images.
+          </p>
+        </div>
+        <div class="rounded-xl border border-black/8 bg-[#f5f5f7]/65 p-4">
+          <div class="text-xs font-bold text-[#0a84ff]">STEP 4</div>
+          <h3 class="mt-1 text-base font-bold text-[#1d1d1f]">Export EPUB 3</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-[#515154]">
+            Click <strong>Convert to EPUB</strong> to generate a ZIP-compliant EPUB 3 archive with uncompressed <code>mimetype</code>, <code>package.opf</code>, <code>nav.xhtml</code>, and reflowable XHTML chapters.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Supported Content & Limits */}
+    <section aria-labelledby="limits-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <h2 id="limits-heading" class="text-2xl font-bold text-[#1d1d1f]">
+        Supported HTML Elements, Image Rules &amp; Guardrail Limits
+      </h2>
+      <p class="mt-2 max-w-3xl text-sm text-[#515154]">
+        ChapterBind prioritizes safe, readable, reflowable ebooks over pixel-exact webpage replication. External URLs and executable code are never run or fetched.
+      </p>
+
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full border-collapse text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="border-b border-black/10 bg-[#f5f5f7]">
+              <th class="px-4 py-3 font-bold text-[#1d1d1f]">Category</th>
+              <th class="px-4 py-3 font-bold text-[#1d1d1f]">Supported &amp; Preserved</th>
+              <th class="px-4 py-3 font-bold text-[#1d1d1f]">Stripped / Handled</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/8 text-[#515154]">
+            <tr>
+              <td class="px-4 py-3 font-semibold text-[#1d1d1f]">Text &amp; Structure</td>
+              <td class="px-4 py-3">
+                Headings (<code>h1</code>–<code>h6</code>), paragraphs, lists, blockquotes, basic tables, emphasis, and <code>pre</code>/<code>code</code> blocks.
+              </td>
+              <td class="px-4 py-3">
+                Hardcoded inline styles, fixed pixel widths, <code>&lt;script&gt;</code>, <code>on*</code> event attributes, forms, and <code>&lt;iframe&gt;</code> tags.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-[#1d1d1f]">Local Images</td>
+              <td class="px-4 py-3">
+                Relative JPEG and PNG paths matched from imported files/folders; aspect ratio preserved via <code>max-width: 100%</code>.
+              </td>
+              <td class="px-4 py-3">
+                Remote <code>https://</code> image URLs are blocked; WebP/GIF/BMP convert to PNG in supported browsers; missing paths trigger warnings.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-[#1d1d1f]">Links &amp; Anchors</td>
+              <td class="px-4 py-3">
+                Same-chapter <code>#anchors</code> and relative links between imported HTML chapters rewrite to internal <code>.xhtml</code> targets; external <code>https://</code> links kept.
+              </td>
+              <td class="px-4 py-3">
+                <code>javascript:</code> / unsafe URLs and dead local <code>.html</code> links are neutralized to plain text with a diagnostic warning.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-[#1d1d1f]">Size &amp; Count Limits</td>
+              <td class="px-4 py-3">
+                Up to <strong>50 files</strong>, <strong>30 chapters</strong>, <strong>5 MB</strong> per HTML file, <strong>10 MB / 16 MP</strong> per image, <strong>50 MB</strong> total project size.
+              </td>
+              <td class="px-4 py-3">
+                Over-limit files trigger explicit pre-export errors so the browser tab remains responsive.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* Actual Output Example */}
+    <section aria-labelledby="output-example-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="max-w-xl space-y-3">
+          <h2 id="output-example-heading" class="text-2xl font-bold text-[#1d1d1f]">
+            Actual Output Example: EPUB 3 Package Structure
+          </h2>
+          <p class="text-sm leading-relaxed text-[#515154]">
+            Every exported file follows the EPUB 3 structure: an uncompressed <code>mimetype</code> first ZIP entry, container metadata, OPF spine/manifest, HTML5 navigation document, and clean XHTML5 chapters.
+          </p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a
+              href="/samples/chapterbind-sample-ebook.epub"
+              download="chapterbind-sample-ebook.epub"
+              class="btn-tactile inline-flex items-center rounded-xl bg-[#1d1d1f] px-4 py-2 text-xs font-semibold text-white hover:bg-black"
+            >
+              Download Sample EPUB (.epub)
+            </a>
+            <a
+              href="/samples/chapterbind-sample-source.zip"
+              download="chapterbind-sample-source.zip"
+              class="btn-tactile inline-flex items-center rounded-xl border border-black/15 bg-white px-4 py-2 text-xs font-semibold text-[#1d1d1f] hover:bg-[#f5f5f7]"
+            >
+              Download Sample HTML + Images (.zip)
+            </a>
+          </div>
+        </div>
+
+        <pre class="overflow-x-auto rounded-xl border border-black/10 bg-[#14171f] p-4 font-mono text-xs leading-relaxed text-slate-100 lg:min-w-[430px]"><code>{`chapterbind-sample-ebook.epub
+├── mimetype                      (stored uncompressed first)
+├── META-INF/
+│   └── container.xml             (points to EPUB/package.opf)
+└── EPUB/
+    ├── package.opf               (EPUB 3.0 metadata, manifest, spine)
+    ├── nav.xhtml                 (auto-generated TOC & landmarks)
+    ├── cover.xhtml               (optional cover wrapper page)
+    ├── styles/
+    │   └── ebook.css             (reflowable reader typography)
+    ├── images/
+    │   ├── cover.png
+    │   ├── img-01-eink-layout.png
+    │   └── img-02-type-scale.png
+    └── chapters/
+        ├── chapter-001.xhtml
+        ├── chapter-002.xhtml
+        └── chapter-003.xhtml`}</code></pre>
+      </div>
+    </section>
+
+    {/* Target Use Cases */}
+    <section aria-labelledby="use-cases-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <h2 id="use-cases-heading" class="text-2xl font-bold text-[#1d1d1f]">
+        Designed for Readers, Authors, and Local HTML Archives
+      </h2>
+      <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <article class="rounded-xl border border-black/8 bg-[#f5f5f7]/60 p-5">
+          <h3 class="text-base font-bold text-[#1d1d1f]">Saved Web Articles to E-Reader</h3>
+          <p class="mt-2 text-xs leading-relaxed text-[#515154]">
+            Saved a long essay with <strong>Save Page As (Complete)</strong>? Select the <code>.html</code> file and its companion <code>_files</code> folder to pack the text and diagrams into a distraction-free ebook.
+          </p>
+        </article>
+        <article class="rounded-xl border border-black/8 bg-[#f5f5f7]/60 p-5">
+          <h3 class="text-base font-bold text-[#1d1d1f]">Multi-Chapter Manuscript Merging</h3>
+          <p class="mt-2 text-xs leading-relaxed text-[#515154]">
+            Authors exporting HTML drafts from Markdown tools or static site generators can combine separate chapter files, reorder sections, set cover metadata, and build one cohesive EPUB.
+          </p>
+        </article>
+        <article class="rounded-xl border border-black/8 bg-[#f5f5f7]/60 p-5">
+          <h3 class="text-base font-bold text-[#1d1d1f]">Personal Docs &amp; Reference Manuals</h3>
+          <p class="mt-2 text-xs leading-relaxed text-[#515154]">
+            Convert locally owned documentation, course handouts, or bilingual notes into portable offline books with working internal cross-links and code blocks.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    {/* FAQ */}
+    <section aria-labelledby="faq-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <h2 id="faq-heading" class="text-2xl font-bold text-[#1d1d1f]">
+        Frequently Asked Questions
+      </h2>
+      <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+        {faqItems.map((item) => (
+          <article class="rounded-xl border border-black/8 bg-[#f5f5f7]/50 p-4">
+            <h3 class="text-sm font-bold text-[#1d1d1f]">{item.q}</h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-[#515154]">{item.a}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    {/* Internal Links to Guides */}
+    <section aria-labelledby="guides-heading" class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+      <h2 id="guides-heading" class="text-xl font-bold text-[#1d1d1f]">
+        Related Guides &amp; Troubleshooting
+      </h2>
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <a
+          href="/how-to-convert-html-to-epub/"
+          class="block rounded-xl border border-black/10 bg-[#f5f5f7]/60 p-4 no-underline transition-colors hover:border-[#0a84ff]"
+        >
+          <div class="text-sm font-bold text-[#0a84ff]">
+            How to Convert HTML to EPUB with Images &amp; Chapters →
+          </div>
+          <p class="mt-1 text-xs text-[#515154]">
+            Learn how to save web pages cleanly, organize local image folders, order chapters, and sideload EPUB files to Apple Books, Kindle, and Kobo.
+          </p>
+        </a>
+        <a
+          href="/html-to-epub-troubleshooting/"
+          class="block rounded-xl border border-black/10 bg-[#f5f5f7]/60 p-4 no-underline transition-colors hover:border-[#0a84ff]"
+        >
+          <div class="text-sm font-bold text-[#0a84ff]">
+            HTML to EPUB Troubleshooting: Missing Images &amp; TOC Fixes →
+          </div>
+          <p class="mt-1 text-xs text-[#515154]">
+            Fix missing relative image paths, broken internal anchor links, duplicate IDs, and unexpected layout changes in reflowable e-readers.
+          </p>
+        </a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,156 @@
+---
+import '@/styles/global.css';
+import { FOOTER_LINKS, NAV_LINKS, SITE } from '@/config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonicalPath = Astro.url.pathname,
+  structuredData,
+  noindex = false,
+} = Astro.props;
+
+const baseSite = Astro.site ?? new URL(SITE.baseUrl);
+const normalizedPath = canonicalPath.endsWith('/') ? canonicalPath : `${canonicalPath}/`;
+const canonicalUrl = new URL(normalizedPath, baseSite).toString();
+const ogImageUrl = new URL('/og-image.png', baseSite).toString();
+const schemas = structuredData
+  ? Array.isArray(structuredData)
+    ? structuredData
+    : [structuredData]
+  : [];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="google-site-verification" content={SITE.googleSiteVerification} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {noindex ? (
+      <meta name="robots" content="noindex, nofollow" />
+    ) : (
+      <link rel="canonical" href={canonicalUrl} />
+    )}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={SITE.brandName} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="ChapterBind HTML to EPUB Converter — client-side chapter merger, TOC builder, and EPUB 3 exporter"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    {schemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+  </head>
+  <body class="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[#0a84ff] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+    >
+      Skip to main content
+    </a>
+
+    <header class="glass-bar sticky top-0 z-40 border-b border-black/10">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <a href="/" class="flex items-center gap-2.5 text-[#1d1d1f] no-underline">
+          <span
+            aria-hidden="true"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#1d1d1f] text-xs font-bold tracking-tight text-white shadow-xs"
+          >
+            CB
+          </span>
+          <span class="text-base font-bold tracking-tight">{SITE.brandName}</span>
+          <span class="hidden rounded-full border border-black/10 bg-black/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-[#515154] sm:inline-block">
+            EPUB 3 Studio
+          </span>
+        </a>
+
+        <nav aria-label="Primary navigation" class="flex flex-wrap items-center gap-1 sm:gap-1.5">
+          {NAV_LINKS.map((link) => {
+            const active =
+              Astro.url.pathname === link.href ||
+              (link.href !== '/' && Astro.url.pathname.startsWith(link.href));
+            return (
+              <a
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                class={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+                  active
+                    ? 'bg-[#1d1d1f] text-white'
+                    : 'text-[#515154] hover:bg-black/[0.05] hover:text-[#1d1d1f]'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <slot />
+    </main>
+
+    <footer class="mt-16 border-t border-black/10 bg-white">
+      <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div class="max-w-xl space-y-2">
+            <div class="text-sm font-bold text-[#1d1d1f]">
+              {SITE.brandName} · HTML to EPUB 3 Converter
+            </div>
+            <p class="text-xs leading-relaxed text-[#515154]">
+              Convert HTML chapters and local images into clean, reflowable EPUB 3 files right in your browser. Intended for articles, manuscripts, and documentation you have the right to convert.
+            </p>
+          </div>
+
+          <nav aria-label="Footer navigation" class="flex flex-wrap gap-x-5 gap-y-2">
+            {FOOTER_LINKS.map((link) => (
+              <a
+                href={link.href}
+                class="text-xs font-semibold text-[#515154] hover:text-[#1d1d1f] hover:underline"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+
+        <p class="mt-6 border-t border-black/5 pt-5 text-[11px] text-[#6e6e73]">
+          Last updated <time datetime={SITE.lastUpdated}>{SITE.lastUpdated}</time> · Questions or bug reports:{' '}
+          <a
+            href={`mailto:${SITE.contactEmail}`}
+            class="font-semibold text-[#1d1d1f] underline-offset-2 hover:underline"
+          >
+            {SITE.contactEmail}
+          </a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

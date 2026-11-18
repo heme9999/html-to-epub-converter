@@ -1,0 +1,50 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/config/site';
+
+const title = 'About ChapterBind – Standards-Based HTML to EPUB Tool | ChapterBind';
+const description =
+  'About ChapterBind, a focused browser-based HTML to EPUB 3 converter built for clean reflowable ebooks, local image bundling, and transparent diagnostics.';
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/about/">
+  <article class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+    <div class="rounded-2xl border border-black/10 bg-white p-6 shadow-xs sm:p-8">
+      <h1 class="display-heading text-3xl font-extrabold text-[#1d1d1f]">About ChapterBind</h1>
+
+      <div class="mt-5 space-y-5 text-sm leading-relaxed text-[#515154]">
+        <p>
+          <strong>ChapterBind</strong> is a focused HTML to EPUB 3 converter designed for readers who archive long-form web articles for e-ink devices, authors assembling multi-chapter HTML drafts into books, and anyone packaging locally owned HTML documentation for offline reading.
+        </p>
+
+        <section>
+          <h2 class="text-lg font-bold text-[#1d1d1f]">Phase 1 Scope &amp; Design Choices</h2>
+          <ul class="mt-2 list-disc space-y-1.5 pl-5">
+            <li>Converts single or multiple HTML/HTM files and companion local images into valid EPUB 3.0 / 3.3 packages.</li>
+            <li>Prioritizes clean, readable reflowable ebook typography over fragile pixel-by-pixel web layout cloning.</li>
+            <li>Surface clear warnings and explicit limits instead of silently dropping broken images or hanging on oversized files.</li>
+            <li>Does not crawl live URLs, strip DRM, or convert PDF/Word documents.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-[#1d1d1f]">Validation Standards</h2>
+          <p class="mt-1.5">
+            The EPUB generator packages an uncompressed <code>mimetype</code> first entry, <code>META-INF/container.xml</code>, <code>EPUB/package.opf</code>, <code>EPUB/nav.xhtml</code>, reflowable styles, and XHTML5 chapter documents verified against W3C EPUBCheck 5.1.0.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-[#1d1d1f]">Feedback &amp; Bug Reports</h2>
+          <p class="mt-1.5">
+            If an HTML input triggers an unexpected EPUBCheck warning or layout issue, reach out via our{' '}
+            <a href="/contact/" class="font-semibold text-[#0a84ff] hover:underline">Contact page</a> or email{' '}
+            <a href={`mailto:${SITE.contactEmail}`} class="font-semibold text-[#0a84ff] hover:underline">
+              {SITE.contactEmail}
+            </a>.
+          </p>
+        </section>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
