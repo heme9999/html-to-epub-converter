@@ -859,8 +859,8 @@ export default function ConverterApp() {
                   id: 'export',
                   label:
                     blockingErrors.length > 0
-                      ? `3. Settings (${blockingErrors.length} err)`
-                      : '3. Settings & Export',
+                      ? `3. Export (${blockingErrors.length} err)`
+                      : '3. Export',
                 },
               ] as const
             ).map((step) => (
@@ -870,7 +870,7 @@ export default function ConverterApp() {
                 role="tab"
                 aria-selected={mobileStep === step.id}
                 onClick={() => setMobileStep(step.id)}
-                className="px-3.5 py-3 text-xs font-semibold whitespace-nowrap text-[#515154]"
+                className="px-3 py-3 text-xs font-semibold whitespace-nowrap text-[#515154]"
               >
                 {step.label}
               </button>

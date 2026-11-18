@@ -21,6 +21,7 @@ import {
   inspectImageDimensions,
 } from './image-utils';
 import { buildChapterPreviewHtml, parseAndSanitizeChapter } from './sanitizer';
+import { rewriteBookLinks } from './link-rewriter';
 
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 
@@ -308,7 +309,17 @@ export async function importRawFilesIntoProject(
     parseIssues.push(...chIssues);
   }
 
-  // Keep import-time issues (limits, converted images, duplicates, unsupported files) + fresh parse issues
+  // Detect cross-chapter & broken internal links immediately on import so diagnostics show them pre-export
+  const linkPreviewResult = rewriteBookLinks(nextChapters);
+  for (const ch of nextChapters) {
+    ch.linkRefs = linkPreviewResult.linkRefsByChapterId[ch.id] ?? [];
+    const rewrittenBody = linkPreviewResult.rewrittenBodiesByChapterId[ch.id];
+    if (rewrittenBody) {
+      ch.previewHtml = buildChapterPreviewHtml(rewrittenBody, images);
+    }
+  }
+
+  // Keep import-time issues (limits, converted images, duplicates, unsupported files) + fresh parse + link issues
   const importLevelIssues = issues.filter(
     (i) =>
       i.code === 'LIMIT_FILE_COUNT' ||
@@ -339,7 +350,7 @@ export async function importRawFilesIntoProject(
     chapters: nextChapters,
     images,
     metadata: nextMetadata,
-    issues: [...importLevelIssues, ...parseIssues],
+    issues: [...importLevelIssues, ...parseIssues, ...linkPreviewResult.issues],
     totalInputBytes: totalBytes,
     importedFileCount,
     allowMissingImages: currentProject.allowMissingImages,

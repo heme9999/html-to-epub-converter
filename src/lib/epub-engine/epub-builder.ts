@@ -449,7 +449,9 @@ export async function buildEpubPackage(
   }));
 
   const linkResult = rewriteBookLinks(orderedChapters);
-  const allIssues: ConversionIssue[] = [...preIssues, ...linkResult.issues];
+  // Avoid duplicating BROKEN_INTERNAL_LINK issues that were already logged during import
+  const basePreIssues = preIssues.filter((i) => i.code !== 'BROKEN_INTERNAL_LINK');
+  const allIssues: ConversionIssue[] = [...basePreIssues, ...linkResult.issues];
 
   reportProgress(40, 'Generating EPUB 3 XHTML chapters...');
   const generatedXhtmlByChapterId: Record<string, string> = {};
